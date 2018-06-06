@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_share_page"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="Share Page" />
+        <item
+            android:id="@+id/nav_save_page"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="Save Page" />
+        <item
+            android:id="@+id/nav_history"
+            android:icon="@drawable/ic_menu_send"
+            android:title="History" />
+        <item
+            android:id="@+id/nav_bookmarks"
+            android:icon="@drawable/ic_menu_send"
+            android:title="Bookmarks" />
+    </group>
+
+    <item android:title="Dev Tools">
+        <menu>
+            <item
+                android:id="@+id/nav_view_html"
+                android:icon="@drawable/ic_menu_share"
+                android:title="View HTML" />
+            <item
+                android:id="@+id/nav_editor"
+                android:icon="@drawable/ic_menu_send"
+                android:title="Quick Editor" />
+            <item
+                android:id="@+id/nav_view_console"
+                android:icon="@drawable/ic_menu_send"
+                android:title="Console Log" />
+        </menu>
+    </item>
+
+    <item android:title="Developer Sites">
+        <menu>
+            <item
+                android:id="@+id/nav_stack_overflow"
+                android:icon="@drawable/ic_menu_send"
+                android:title="Stack Overflow" />
+            <item
+                android:id="@+id/nav_w3"
+                android:icon="@drawable/ic_menu_send"
+                android:title="W3 Schools" />
+            <item
+                android:id="@+id/nav_android_devs"
+                android:icon="@drawable/ic_menu_send"
+                android:title="Android Developers" />
+            <item
+                android:id="@+id/nav_fb_devs"
+                android:icon="@drawable/ic_menu_send"
+                android:title="Facebook Developers" />
+        </menu>
+    </item>
+
+    <item android:title="App">
+        <menu>
+
+            <item
+                android:id="@+id/nav_about"
+                android:icon="@drawable/ic_menu_send"
+                android:title="About" />
+            <item
+                android:id="@+id/nav_settings"
+                android:icon="@drawable/ic_menu_send"
+                android:title="Settings" />
+        </menu>
+    </item>
+
+</menu>
