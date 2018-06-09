@@ -56,30 +56,32 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:background="#ffffff"
+        android:background="#7b7b7b"
         android:padding="5dp"
         android:layout_marginBottom="70dp"
         android:layout_marginEnd="15dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone">
 
         <ImageView
             android:id="@+id/btn_reload"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:src="@mipmap/reload"
             android:layout_marginBottom="10dp"/>
 
         <ImageView
             android:id="@+id/btn_forward"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:src="@mipmap/arrow"
             android:layout_marginBottom="10dp"/>
 
         <ImageView
             android:id="@+id/btn_back"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:rotation="180"
             android:src="@mipmap/arrow"/>
     </LinearLayout>
 

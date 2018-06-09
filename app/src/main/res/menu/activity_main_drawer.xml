@@ -5,6 +5,14 @@
 
     <group android:checkableBehavior="single">
         <item
+            android:id="@+id/nav_voice_search"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="Voice Search" />
+        <item
+            android:id="@+id/nav_shortcut"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="Create Shortcut" />
+        <item
             android:id="@+id/nav_share_page"
             android:icon="@drawable/ic_menu_gallery"
             android:title="Share Page" />
@@ -12,6 +20,10 @@
             android:id="@+id/nav_save_page"
             android:icon="@drawable/ic_menu_manage"
             android:title="Save Page" />
+        <item
+            android:id="@+id/nav_print"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="Print " />
         <item
             android:id="@+id/nav_history"
             android:icon="@drawable/ic_menu_send"
