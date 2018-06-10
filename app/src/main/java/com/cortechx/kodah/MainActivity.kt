@@ -1,5 +1,6 @@
 package com.cortechx.kodah
 
+import android.app.DownloadManager
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.design.widget.Snackbar
@@ -18,7 +19,6 @@ import android.widget.TextView
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
-//import com.squareup.picasso.*;
 
 import android.webkit.WebView
 import android.content.Intent
@@ -34,11 +34,16 @@ import android.graphics.Canvas
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.print.PrintAttributes
 import android.print.PrintDocumentAdapter
 import android.print.PrintManager
 import android.speech.RecognizerIntent
+import android.view.inputmethod.InputMethodManager
 import kotlinx.android.synthetic.main.nav_header_main.*
+import kotlinx.android.synthetic.main.nav_header_main.btn_back
+import kotlinx.android.synthetic.main.nav_header_main.btn_forward
+import kotlinx.android.synthetic.main.nav_header_main.btn_reload
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
@@ -62,27 +67,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
-        fab.setOnClickListener { _ ->
-           //BRING UP CONTROLS
-            if(controls.visibility == View.GONE) {
-                controls.visibility = View.VISIBLE
-            }else{
-                controls.visibility = View.GONE
-            }
-        }
-        //BUTTONS
-        btn_back.setOnClickListener { _ ->
-            if (webview.canGoBack())
-                webview.goBack()
-        }
-        btn_forward.setOnClickListener { _ ->
-            if (webview.canGoForward())
-                webview.goForward()
-        }
-        btn_reload.setOnClickListener { _ ->
-            webview.reload()
-        }
-
         val toggle = ActionBarDrawerToggle(
                 this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         drawer_layout.addDrawerListener(toggle)
@@ -92,62 +76,75 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         //SETUP THE WEBVIEW
         webview.settings.javaScriptEnabled = true
+        webview.settings.setAppCacheEnabled(true)
+        webview.settings.setAppCachePath(this.cacheDir.path)
         webview.settings.loadWithOverviewMode = true
         webview.settings.useWideViewPort = true
         registerForContextMenu (webview)
+        webview.setDownloadListener( object: DownloadListener {
+            override fun onDownloadStart(p0: String?, p1: String?, p2: String?, p3: String?, p4: Long) {
+                val request = DownloadManager.Request(Uri.parse(p0))
+                request.allowScanningByMediaScanner()
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                val Dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                Dm.enqueue(request)
+                Toast.makeText(applicationContext, "Download started", Toast.LENGTH_SHORT).show()
+            }
+        })
         webview.webViewClient = object : WebViewClient() {
             val loadBar = Snackbar.make(webview, "LOADING...", Snackbar.LENGTH_INDEFINITE)
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                if (URLUtil.isValidUrl (request!!.url.toString())) {
+                view!!.loadUrl(request!!.url.toString())
+                if (URLUtil.isValidUrl (request.url.toString())) {
+
                     if (request.url.toString().contains (".mp3")) {
                         val intent = Intent (Intent.ACTION_VIEW)
-                        intent.setDataAndType (Uri.parse (request.url.toString()), "audio/*");
+                        intent.setDataAndType (Uri.parse (request.url.toString()), "audio/*")
                         startActivity (Intent.createChooser (intent, "Open Using..."))
+                        return true
                     }
                     else if (request.url.toString().contains (".mp4") || request.url.toString().contains (".3gp")) {
                         val intent = Intent (Intent.ACTION_VIEW)
                         intent.setDataAndType (Uri.parse (request.url.toString()), "video/*")
                         startActivity (Intent.createChooser (intent, "Open Using..."))
+                        return true
                     }
                     else if (request.url.toString().contains ("youtube.com")) {
                         startActivity (Intent (Intent.ACTION_VIEW, Uri.parse (request.url.toString())))
+                        return true
                     }
-                    else {
-                        webview.loadUrl(request.url.toString())
-                    }
+                    return true
                 }
                 else {
-                    webview.loadUrl ("http://www.google.com/search?sclient=tablet-gws&safe=active&site=&source=hp&q=" + request.url.toString())
+                    view.loadUrl ("http://www.google.com/search?q=" + request.url.toString())
+                    return true
                 }
-
-                if ("about:blank" == request.url.toString() && view!!.tag != null) {
-                    view.loadUrl (view.tag.toString ())
-                }
-                else {
-                    view!!.tag = request.url.toString()
-                }
-
-                return true
             }
 
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 loadBar.setAction("STOP", {
-                    webview.stopLoading()
+                    view!!.stopLoading()
                     loadBar.dismiss()
                 }).show()
-
-                UrlBar.setText(url)
                 super.onPageStarted(view, url, favicon)
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 loadBar.dismiss()
+                UrlBar.setText(url)
+                if ("about:blank" == url && view!!.tag != null) {
+                    view.loadUrl (view.tag.toString ())
+                }
+                else {
+                    view!!.tag = url
+                }
                 super.onPageFinished(view, url)
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                 Snackbar.make(webview, "ERROR LOADING PAGE", Snackbar.LENGTH_SHORT).show()
+                view!!.loadUrl("file:///android_asset/error.html")
                 super.onReceivedError(view, request, error)
             }
         }
@@ -181,14 +178,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             webview.loadUrl(url.toString())
         }
 
+
         //KEYBOARD ACTION
         UrlBar.setOnEditorActionListener (object: TextView.OnEditorActionListener {
             override fun onEditorAction(p0: TextView?, p1: Int, p2: KeyEvent?): Boolean {
-                if (p1 == EditorInfo.IME_ACTION_DONE || p1 == EditorInfo.IME_ACTION_NEXT) {
+                if (p1 == EditorInfo.IME_ACTION_SEND) {
                     val webpage: String = UrlBar.text.toString ()
                     webview.loadUrl (webpage)
+                    //CLOSE SOFT KEYBOARD
+                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.hideSoftInputFromWindow(UrlBar.windowToken, 0)
+                    return true
                 }
-               return true
+                return true
             }
         })
     }
@@ -239,7 +241,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
             //dev tools
             R.id.nav_view_html -> {
-
+			  val i = Intent ("android.intent.action.VIEW_SOURCE")
+			  i.data = Uri.parse(webview.url)
+			  startActivity (i)
             }
             R.id.nav_editor -> {
 
@@ -395,6 +399,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 applicationContext.sendBroadcast (addIntent)
           }
 	  }
+
+    fun Controls(v: View){
+        when (v.id){
+            R.id.btn_back->{
+                    webview.goBack()
+            }
+            R.id.btn_forward->{
+                    webview.goForward()
+            }
+            R.id.btn_reload->{
+                webview.reload()
+            }
+        }
+    }
 
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

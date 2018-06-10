@@ -6,31 +6,31 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_voice_search"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@mipmap/voice"
             android:title="Voice Search" />
         <item
             android:id="@+id/nav_shortcut"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@mipmap/shortcut"
             android:title="Create Shortcut" />
         <item
             android:id="@+id/nav_share_page"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@mipmap/share"
             android:title="Share Page" />
         <item
             android:id="@+id/nav_save_page"
-            android:icon="@drawable/ic_menu_manage"
+            android:icon="@mipmap/save"
             android:title="Save Page" />
         <item
             android:id="@+id/nav_print"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@mipmap/print"
             android:title="Print " />
         <item
             android:id="@+id/nav_history"
-            android:icon="@drawable/ic_menu_send"
+            android:icon="@mipmap/history"
             android:title="History" />
         <item
             android:id="@+id/nav_bookmarks"
-            android:icon="@drawable/ic_menu_send"
+            android:icon="@mipmap/bookmark"
             android:title="Bookmarks" />
     </group>
 
@@ -38,15 +38,15 @@
         <menu>
             <item
                 android:id="@+id/nav_view_html"
-                android:icon="@drawable/ic_menu_share"
+                android:icon="@mipmap/view_source"
                 android:title="View HTML" />
             <item
                 android:id="@+id/nav_editor"
-                android:icon="@drawable/ic_menu_send"
+                android:icon="@mipmap/editor"
                 android:title="Quick Editor" />
             <item
                 android:id="@+id/nav_view_console"
-                android:icon="@drawable/ic_menu_send"
+                android:icon="@mipmap/log"
                 android:title="Console Log" />
         </menu>
     </item>
@@ -55,19 +55,19 @@
         <menu>
             <item
                 android:id="@+id/nav_stack_overflow"
-                android:icon="@drawable/ic_menu_send"
+                android:icon="@mipmap/link"
                 android:title="Stack Overflow" />
             <item
                 android:id="@+id/nav_w3"
-                android:icon="@drawable/ic_menu_send"
+                android:icon="@mipmap/link"
                 android:title="W3 Schools" />
             <item
                 android:id="@+id/nav_android_devs"
-                android:icon="@drawable/ic_menu_send"
+                android:icon="@mipmap/link"
                 android:title="Android Developers" />
             <item
                 android:id="@+id/nav_fb_devs"
-                android:icon="@drawable/ic_menu_send"
+                android:icon="@mipmap/link"
                 android:title="Facebook Developers" />
         </menu>
     </item>
@@ -77,11 +77,11 @@
 
             <item
                 android:id="@+id/nav_about"
-                android:icon="@drawable/ic_menu_send"
+                android:icon="@mipmap/about"
                 android:title="About" />
             <item
                 android:id="@+id/nav_settings"
-                android:icon="@drawable/ic_menu_send"
+                android:icon="@mipmap/settings"
                 android:title="Settings" />
         </menu>
     </item>

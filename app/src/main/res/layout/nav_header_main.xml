@@ -18,28 +18,54 @@
         android:orientation="horizontal">
 
         <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="80dp"
-            android:layout_height="90dp"
+            android:id="@+id/siteIcon"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
             android:paddingTop="@dimen/nav_header_vertical_spacing"
             app:srcCompat="@mipmap/kodah_icon" />
         <TextView
+            android:id="@+id/webviewTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textStyle="bold|italic"
-            android:textSize="20sp"
+            android:maxLines="2"
+            android:textStyle="bold"
+            android:textSize="15sp"
             android:text="KODAH" />
 
     </LinearLayout>
 
 
-    <TextView
-        android:id="@+id/webviewTitle"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textStyle="italic"
-        android:textSize="22sp"
-        android:text="" />
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="50dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="15dp"
+            android:onClick="Controls"
+            android:rotation="180"
+            android:src="@mipmap/arrow"/>
+
+        <ImageView
+            android:id="@+id/btn_forward"
+            android:layout_width="50dp"
+            android:layout_height="30dp"
+            android:src="@mipmap/arrow"
+            android:onClick="Controls"
+            android:layout_marginEnd="10dp"/>
+
+        <ImageView
+            android:id="@+id/btn_reload"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:onClick="Controls"
+            android:src="@mipmap/reload"/>
+
+    </LinearLayout>
 
 
 </LinearLayout>
