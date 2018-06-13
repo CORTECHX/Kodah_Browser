@@ -19,8 +19,8 @@
 
         <ImageView
             android:id="@+id/siteIcon"
-            android:layout_width="70dp"
-            android:layout_height="70dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:paddingTop="@dimen/nav_header_vertical_spacing"
             app:srcCompat="@mipmap/kodah_icon" />
         <TextView

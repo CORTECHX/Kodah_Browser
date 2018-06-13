@@ -34,6 +34,7 @@
                     android:hint="Search for something"
                     android:textColor="#ffffff"
                     android:inputType="textUri"
+                    android:focusedByDefault="false"
                     android:imeOptions="actionSend"
                     android:imeActionLabel="GO"/>
             </LinearLayout>

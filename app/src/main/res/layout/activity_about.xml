@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.cortechx.kodah.AboutActivity"
+    android:background="@color/colorPrimary"
+    tools:ignore="HardcodedText"
+    android:padding="15dp">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Kodah is a web browser loaded with features for coders, especially web developers."
+                android:textColor="#fff"
+                android:textSize="20sp"/>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:background="#0077ff"
+                android:layout_marginBottom="20dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Developer: Cortechx Studios\nEmail: cortechx.official@gmail.com\nGithub: @CORTECHX\nInstagram: @cortechx"
+                android:textColor="#5f8289"
+                android:textSize="16sp"/>
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:background="#6200ff"
+                android:layout_marginBottom="50dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Open Source Projects Used:"
+                android:textColor="#9b9b9b"
+                android:textSize="20sp"
+                android:layout_marginBottom="20dp"/>
+
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimaryDark"
+                android:text=" Android CodeView\n\n com.github.tiagohm:CodeView\n version: 0.4.0"
+                android:textColor="#999999"
+                android:textSize="20sp"
+                android:layout_marginBottom="20dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimaryDark"
+                android:text=" Picasso\n\n com.squareup.picasso\n version: 2.71828"
+                android:textColor="#999999"
+                android:textSize="20sp"
+                android:layout_marginBottom="20dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

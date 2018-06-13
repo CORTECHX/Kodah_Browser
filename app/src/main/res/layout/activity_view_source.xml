@@ -16,12 +16,18 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="5dp"
+        android:maxLines="1"
         android:padding="5dp"
-        android:textColor="#b5fff9"
+        android:textColor="#ffffff"
         android:text="...LOADING..."
-        android:textSize="20sp"/>
-    <WebView
+        android:textSize="15sp"/>
+
+    <br.tiagohm.codeview.CodeView
         android:id="@+id/SourceView"
+        app:cv_font_size="16"
+        app:cv_show_line_number="true"
+        app:cv_start_line_number="0"
+        app:cv_zoom_enable="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 

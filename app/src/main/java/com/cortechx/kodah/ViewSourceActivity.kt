@@ -2,41 +2,47 @@ package com.cortechx.kodah
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import br.tiagohm.codeview.CodeView
+import br.tiagohm.codeview.Language
+import br.tiagohm.codeview.Theme
 import kotlinx.android.synthetic.main.activity_view_source.*
 
-class ViewSourceActivity : AppCompatActivity() {
+class ViewSourceActivity : AppCompatActivity(){
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_view_source)
 
         val url = intent.data.toString()
+        val HTML_TEXT = GetHTML().getHtml(url)
 
-        SourceView.settings.useWideViewPort = true
-        SourceView.settings.javaScriptEnabled = true
-        SourceView.settings.builtInZoomControls = true
-        SourceView.settings.supportZoom()
-        SourceView.webViewClient = object : WebViewClient(){
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                view!!.loadUrl(request!!.url.toString())
-                return true
+
+        SourceView.setOnHighlightListener(object : CodeView.OnHighlightListener{
+            override fun onStartCodeHighlight() {
+                //
             }
-        }
 
-        var HTML_TEXT = GetHTML().getHtml(url)
+            override fun onFinishCodeHighlight() {
+                SourceLoad.text = url
+            }
 
-        HTML_TEXT = HTML_TEXT!!.replace("<","&lt;")
-        HTML_TEXT = HTML_TEXT.replace(">","&gt;")
+            override fun onLanguageDetected(p0: Language?, p1: Int) {
+                //Toast.makeText(applicationContext, "language: " + p0 + " relevance: " + p1, Toast.LENGTH_SHORT).show()
+            }
 
+            override fun onLineClicked(p0: Int, p1: String?) {
+                SourceView.highlightLineNumber(p0)
+            }
 
-        val head = " <head><link rel=\"stylesheet\" href=\"highlight.JS/styles/monokai.css\"><script src=\"highlight.JS/highlight.pack.js\"></script><script>hljs.initHighlightingOnLoad();</script></head>"
-        val htmlData = "<!doctype html><html>"+head+"<body><pre><code class=\"html\">"+HTML_TEXT+"</code></pre></body></html>"
+            override fun onFontSizeChanged(p0: Int) {
+                SourceView.fontSize = p0.toFloat()
+            }
+        })
+        SourceView.code = HTML_TEXT
+        SourceView.theme = Theme.MONOKAI
+        SourceView.apply()
 
-        SourceView.loadDataWithBaseURL("file:///android_asset/",htmlData, "text/html", "utf-8",null)
-
-        SourceLoad.text = url
     }
+
+
 }

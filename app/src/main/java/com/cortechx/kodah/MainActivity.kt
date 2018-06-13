@@ -9,45 +9,36 @@ import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.view.ContextMenu
-import android.view.KeyEvent
-import android.view.MenuItem
-import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.webkit.*
-import android.widget.TextView
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
 
 import android.webkit.WebView
-import android.content.Intent
 import android.widget.Toast
-import android.content.ClipData
 import android.graphics.drawable.Drawable
 import android.app.WallpaperManager
-import android.content.ClipboardManager
-import android.content.Context
+import android.content.*
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.Canvas
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
 import android.print.PrintAttributes
 import android.print.PrintDocumentAdapter
 import android.print.PrintManager
 import android.speech.RecognizerIntent
+import android.util.Patterns
+import android.view.*
 import android.view.inputmethod.InputMethodManager
 import kotlinx.android.synthetic.main.nav_header_main.*
-import kotlinx.android.synthetic.main.nav_header_main.btn_back
-import kotlinx.android.synthetic.main.nav_header_main.btn_forward
-import kotlinx.android.synthetic.main.nav_header_main.btn_reload
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -59,13 +50,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private val ID_SHARELINK = 5000
     private val ID_OPENLINK = 6000
 
-    private val REQUEST_CODE_RESULTS = 100
+    private val REQUEST_CODE_HISTORY = 100
     private val REQUEST_CODE_VOICE = 200
+
+    var prefs: SharedPreferences ?= null
+    var editor:SharedPreferences.Editor? = null
+    val history = ArrayList<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+
+        prefs = getSharedPreferences("Kodah_Data", Context.MODE_PRIVATE)
+        editor = prefs!!.edit()
 
         val toggle = ActionBarDrawerToggle(
                 this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
@@ -81,8 +79,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         webview.settings.loadWithOverviewMode = true
         webview.settings.useWideViewPort = true
         registerForContextMenu (webview)
-        webview.setDownloadListener( object: DownloadListener {
-            override fun onDownloadStart(p0: String?, p1: String?, p2: String?, p3: String?, p4: Long) {
+        webview.setDownloadListener{p0, _, _, _, _ ->
                 val request = DownloadManager.Request(Uri.parse(p0))
                 request.allowScanningByMediaScanner()
                 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -90,36 +87,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 Dm.enqueue(request)
                 Toast.makeText(applicationContext, "Download started", Toast.LENGTH_SHORT).show()
             }
-        })
         webview.webViewClient = object : WebViewClient() {
             val loadBar = Snackbar.make(webview, "LOADING...", Snackbar.LENGTH_INDEFINITE)
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 view!!.loadUrl(request!!.url.toString())
-                if (URLUtil.isValidUrl (request.url.toString())) {
-
-                    if (request.url.toString().contains (".mp3")) {
-                        val intent = Intent (Intent.ACTION_VIEW)
-                        intent.setDataAndType (Uri.parse (request.url.toString()), "audio/*")
-                        startActivity (Intent.createChooser (intent, "Open Using..."))
-                        return true
-                    }
-                    else if (request.url.toString().contains (".mp4") || request.url.toString().contains (".3gp")) {
-                        val intent = Intent (Intent.ACTION_VIEW)
-                        intent.setDataAndType (Uri.parse (request.url.toString()), "video/*")
-                        startActivity (Intent.createChooser (intent, "Open Using..."))
-                        return true
-                    }
-                    else if (request.url.toString().contains ("youtube.com")) {
-                        startActivity (Intent (Intent.ACTION_VIEW, Uri.parse (request.url.toString())))
-                        return true
-                    }
-                    return true
-                }
-                else {
-                    view.loadUrl ("http://www.google.com/search?q=" + request.url.toString())
-                    return true
-                }
+                return true
             }
 
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
@@ -127,17 +100,30 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     view!!.stopLoading()
                     loadBar.dismiss()
                 }).show()
+                UrlBar.setText(url)
                 super.onPageStarted(view, url, favicon)
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 loadBar.dismiss()
-                UrlBar.setText(url)
-                if ("about:blank" == url && view!!.tag != null) {
-                    view.loadUrl (view.tag.toString ())
+
+                if (url!!.contains (".mp3")) {
+                    val intent = Intent (Intent.ACTION_VIEW)
+                    intent.setDataAndType (Uri.parse (url), "audio/*")
+                    startActivity (Intent.createChooser (intent, "Open Using..."))
                 }
-                else {
-                    view!!.tag = url
+                else if (url.contains (".mp4") || url.contains (".3gp")) {
+                    val intent = Intent (Intent.ACTION_VIEW)
+                    intent.setDataAndType (Uri.parse (url), "video/*")
+                    startActivity (Intent.createChooser (intent, "Open Using..."))
+                }
+                else if (url.contains ("youtube.com")) {
+                    startActivity (Intent (Intent.ACTION_VIEW, Uri.parse (url)))
+                }
+
+                //ADD TO HISTORY
+                if(prefs!!.getBoolean("HistoryEnabled", true)){
+                    history.add(view!!.url)
                 }
                 super.onPageFinished(view, url)
             }
@@ -169,6 +155,28 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
         }
 
+        //KEYBOARD ACTION
+        UrlBar.setOnEditorActionListener {_, p1, _  ->
+                if (p1 == EditorInfo.IME_ACTION_SEND) {
+                    val webpage: String = UrlBar.text.toString ()
+                    if (Patterns.WEB_URL.matcher(webpage).matches()) {
+                        if(webpage.contains("http") or webpage.contains("https")) {
+                            webview.loadUrl(webpage)
+                        }else{
+                            webview.loadUrl("http://" + webpage)
+                        }
+                    }
+                    else {
+                        webview.loadUrl ("http://www.google.com/search?q=" + webpage)
+                    }
+                    //CLOSE SOFT KEYBOARD
+                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.hideSoftInputFromWindow(UrlBar.windowToken, 0)
+                    return@setOnEditorActionListener true
+                }
+                return@setOnEditorActionListener true
+            }
+
         //LOAD URL
         val url = intent.data
 
@@ -177,29 +185,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         } else {
             webview.loadUrl(url.toString())
         }
-
-
-        //KEYBOARD ACTION
-        UrlBar.setOnEditorActionListener (object: TextView.OnEditorActionListener {
-            override fun onEditorAction(p0: TextView?, p1: Int, p2: KeyEvent?): Boolean {
-                if (p1 == EditorInfo.IME_ACTION_SEND) {
-                    val webpage: String = UrlBar.text.toString ()
-                    webview.loadUrl (webpage)
-                    //CLOSE SOFT KEYBOARD
-                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    imm.hideSoftInputFromWindow(UrlBar.windowToken, 0)
-                    return true
-                }
-                return true
-            }
-        })
     }
 
     override fun onBackPressed() {
         if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
             drawer_layout.closeDrawer(GravityCompat.START)
         }
-        else if (webview.canGoBack()){
+
+        if (webview.canGoBack()){
             webview.goBack()
         }
         else {
@@ -234,7 +227,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 printWebDoc()
             }
             R.id.nav_history -> {
-
+                SaveHistory()
+                val i = Intent ("android.intent.action.HISTORY")
+                startActivityForResult (i, REQUEST_CODE_HISTORY)
             }
             R.id.nav_bookmarks -> {
 
@@ -266,7 +261,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
             //About app
             R.id.nav_about -> {
-
+                val i = Intent ("android.intent.action.ABOUT")
+                startActivity (i)
             }
             R.id.nav_settings -> {
 
@@ -419,16 +415,27 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if (resultCode == RESULT_OK) {
             if (requestCode == REQUEST_CODE_VOICE) {
                 val words = data!!.getStringArrayListExtra (RecognizerIntent.EXTRA_RESULTS)[0]
-                webview.loadUrl (words)
+                webview.loadUrl ("http://www.google.com/search?q=" + words)
             }
-            else if (requestCode == REQUEST_CODE_RESULTS) {
-                webview.loadUrl (data!!.extras.getString ("result"))
+            else if (requestCode == REQUEST_CODE_HISTORY) {
+                webview.loadUrl (data!!.extras.getString ("url_clicked"))
             }
         }
-
         super.onActivityResult(requestCode, resultCode, data)
     }
 
+    override fun onStop() {
+        SaveHistory()
+        super.onStop()
+    }
 
+    private fun SaveHistory(){
+        try {
+            editor!!.putString("HistoryList", prefs!!.getString("HistoryList","") + ObjectSerializer.serialize(history))
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        editor!!.commit()
+    }
 
 }

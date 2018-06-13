@@ -41,6 +41,10 @@
                 android:icon="@mipmap/view_source"
                 android:title="View HTML" />
             <item
+                android:id="@+id/nav_inspect"
+                android:icon="@mipmap/inspect"
+                android:title="Inspect" />
+            <item
                 android:id="@+id/nav_editor"
                 android:icon="@mipmap/editor"
                 android:title="Quick Editor" />
