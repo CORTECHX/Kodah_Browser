@@ -12,11 +12,13 @@ import kotlinx.android.synthetic.main.content_main.*
 import android.app.Activity
 import android.content.Intent
 import android.widget.CompoundButton
+import android.widget.Toast
 
 class HistoryActivity : AppCompatActivity() {
 
     var editor: SharedPreferences.Editor? = null
-    var history = ArrayList<String>()
+    var historyTitles = ArrayList<String>()
+    var historyUrls = ArrayList<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,7 +28,8 @@ class HistoryActivity : AppCompatActivity() {
         editor = prefs.edit()
 
         try {
-            history = ObjectSerializer.deserialize(prefs.getString("HistoryList", ObjectSerializer.serialize(ArrayList<String>()))) as ArrayList<String>
+            historyTitles = ObjectSerializer.deserialize(prefs.getString("HistoryTitles", ObjectSerializer.serialize(ArrayList<String>()))) as ArrayList<String>
+            historyUrls = ObjectSerializer.deserialize(prefs.getString("HistoryUrls", ObjectSerializer.serialize(ArrayList<String>()))) as ArrayList<String>
         } catch (e: IOException) {
             e.printStackTrace()
         } catch (e: ClassNotFoundException) {
@@ -36,12 +39,12 @@ class HistoryActivity : AppCompatActivity() {
         val arrayAdapter = ArrayAdapter<String>(
                 this,
                 android.R.layout.simple_list_item_1,
-                history)
+                historyTitles)
         historyListView.adapter = arrayAdapter
 
         historyListView.setOnItemClickListener { adapterView, _, i, _ ->
             val returnIntent = Intent()
-            returnIntent.putExtra("url_clicked", arrayAdapter.getItem(i).toString())
+            returnIntent.putExtra("url_clicked", historyUrls[i])
             setResult(Activity.RESULT_OK, returnIntent)
             finish()
         }
@@ -56,7 +59,7 @@ class HistoryActivity : AppCompatActivity() {
                 editor!!.putBoolean("HistoryEnabled", true)
             } else {
                 // The toggle is disabled
-                editor!!.putBoolean("HistoryEnabled", true)
+                editor!!.putBoolean("HistoryEnabled", false)
             }
             editor!!.commit()
         }

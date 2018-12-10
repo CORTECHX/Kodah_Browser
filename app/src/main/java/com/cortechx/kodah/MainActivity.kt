@@ -1,5 +1,6 @@
 package com.cortechx.kodah
 
+import android.app.Activity
 import android.app.DownloadManager
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -33,6 +34,10 @@ import android.speech.RecognizerIntent
 import android.util.Patterns
 import android.view.*
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
+import android.widget.EditText
+import android.widget.ListView
+import kotlinx.android.synthetic.main.activity_history.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 import java.io.IOException
 import java.io.InputStream
@@ -55,7 +60,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     var prefs: SharedPreferences ?= null
     var editor:SharedPreferences.Editor? = null
-    val history = ArrayList<String>()
+    val historyTitles = ArrayList<String>()
+    val historyUrls = ArrayList<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -123,7 +129,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
                 //ADD TO HISTORY
                 if(prefs!!.getBoolean("HistoryEnabled", true)){
-                    history.add(view!!.url)
+                    historyTitles.add(view!!.title)
+                    historyUrls.add(view.url)
                 }
                 super.onPageFinished(view, url)
             }
@@ -232,7 +239,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 startActivityForResult (i, REQUEST_CODE_HISTORY)
             }
             R.id.nav_bookmarks -> {
-
+                showBookmarks()
             }
             //dev tools
             R.id.nav_view_html -> {
@@ -396,6 +403,47 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
           }
 	  }
 
+    fun addBookmark(v:View){
+        val bookmarkname = EditText (this)
+        bookmarkname.setText (webview.title)
+        AlertDialog.Builder (this).
+                setTitle ("Add Bookmark").
+                setMessage ("name this bookmark:").
+                setView (bookmarkname).
+                setPositiveButton("ADD", {_, _ ->
+                    if (bookmarkname.text.toString() != ""){
+                        try {
+                            editor!!.putString("BookmarkTitles", prefs!!.getString("BookmarkTitles","") + "\n" + bookmarkname.text.toString())
+                            editor!!.putString("BookmarkUrls", prefs!!.getString("BookmarkUrls","") + "\n" + webview.url)
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                        }
+                        editor!!.commit()
+                    }else{
+                        Toast.makeText(this, "Enter a name", Toast.LENGTH_SHORT).show()
+                    }
+                }).setNegativeButton("Cancel",{p0, _ ->
+                    p0.dismiss()
+                }).show()
+    }
+
+    fun showBookmarks(){
+        val d = AlertDialog.Builder(this)
+        val list = ListView(this)
+        val titles = prefs!!.getString("BookmarkTitles", "").split("\n")
+        val urls = prefs!!.getString("BookmarkUrls", "").split("\n")
+        val arrayAdapter = ArrayAdapter<String>(
+                this,
+                android.R.layout.simple_list_item_1,
+                titles)
+        list.adapter = arrayAdapter
+
+        list.setOnItemClickListener { _, _, i, _ ->
+            webview.loadUrl(urls[i])
+        }
+        d.setTitle("Bookmarks").setView(list).show()
+    }
+
     fun Controls(v: View){
         when (v.id){
             R.id.btn_back->{
@@ -431,7 +479,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun SaveHistory(){
         try {
-            editor!!.putString("HistoryList", prefs!!.getString("HistoryList","") + ObjectSerializer.serialize(history))
+            editor!!.putString("HistoryTitles", prefs!!.getString("HistoryTitles","") + ObjectSerializer.serialize(historyTitles))
+            editor!!.putString("HistoryUrls", prefs!!.getString("HistoryUrls","") + ObjectSerializer.serialize(historyUrls))
         } catch (e: IOException) {
             e.printStackTrace()
         }
