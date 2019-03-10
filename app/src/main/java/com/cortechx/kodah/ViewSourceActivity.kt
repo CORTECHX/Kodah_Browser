@@ -24,6 +24,9 @@ class ViewSourceActivity : AppCompatActivity(){
 
             override fun onFinishCodeHighlight() {
                 SourceLoad.text = url
+                SourceView.code = HTML_TEXT
+                SourceView.theme = Theme.MONOKAI
+                SourceView.apply()
             }
 
             override fun onLanguageDetected(p0: Language?, p1: Int) {
@@ -38,9 +41,6 @@ class ViewSourceActivity : AppCompatActivity(){
                 SourceView.fontSize = p0.toFloat()
             }
         })
-        SourceView.code = HTML_TEXT
-        SourceView.theme = Theme.MONOKAI
-        SourceView.apply()
 
     }
 

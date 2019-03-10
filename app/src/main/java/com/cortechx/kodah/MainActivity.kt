@@ -1,8 +1,6 @@
 package com.cortechx.kodah
 
 import android.app.Activity
-import android.app.DownloadManager
-import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.design.widget.NavigationView
@@ -10,16 +8,10 @@ import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
-import android.view.inputmethod.EditorInfo
-import android.webkit.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
 
-import android.webkit.WebView
-import android.widget.Toast
-import android.graphics.drawable.Drawable
-import android.app.WallpaperManager
 import android.content.*
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
@@ -31,37 +23,19 @@ import android.print.PrintAttributes
 import android.print.PrintDocumentAdapter
 import android.print.PrintManager
 import android.speech.RecognizerIntent
-import android.util.Patterns
 import android.view.*
-import android.view.inputmethod.InputMethodManager
-import android.widget.ArrayAdapter
-import android.widget.EditText
-import android.widget.ListView
-import kotlinx.android.synthetic.main.activity_history.*
-import kotlinx.android.synthetic.main.nav_header_main.*
-import java.io.IOException
-import java.io.InputStream
-import java.net.URL
+import android.widget.TextView
+import android.widget.Toast
 import java.util.*
 import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
-    private val ID_SAVEIMAGE = 1000
-    private val ID_VIEWIMAGE = 2000
-    private val ID_SET_AS_BG = 3000
-    private val ID_SAVELINK = 4000
-    private val ID_SHARELINK = 5000
-    private val ID_OPENLINK = 6000
-
-    private val REQUEST_CODE_HISTORY = 100
     private val REQUEST_CODE_VOICE = 200
 
     var prefs: SharedPreferences ?= null
     var editor:SharedPreferences.Editor? = null
-    val historyTitles = ArrayList<String>()
-    val historyUrls = ArrayList<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,119 +52,26 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         nav_view.setNavigationItemSelectedListener(this)
 
-        //SETUP THE WEBVIEW
-        webview.settings.javaScriptEnabled = true
-        webview.settings.setAppCacheEnabled(true)
-        webview.settings.setAppCachePath(this.cacheDir.path)
-        webview.settings.loadWithOverviewMode = true
-        webview.settings.useWideViewPort = true
-        registerForContextMenu (webview)
-        webview.setDownloadListener{p0, _, _, _, _ ->
-                val request = DownloadManager.Request(Uri.parse(p0))
-                request.allowScanningByMediaScanner()
-                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                val Dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-                Dm.enqueue(request)
-                Toast.makeText(applicationContext, "Download started", Toast.LENGTH_SHORT).show()
-            }
-        webview.webViewClient = object : WebViewClient() {
-            val loadBar = Snackbar.make(webview, "LOADING...", Snackbar.LENGTH_INDEFINITE)
+        startService(Intent(this, ClipboardService::class.java))
+    }
 
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                view!!.loadUrl(request!!.url.toString())
-                return true
-            }
-
-            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                loadBar.setAction("STOP", {
-                    view!!.stopLoading()
-                    loadBar.dismiss()
-                }).show()
-                UrlBar.setText(url)
-                super.onPageStarted(view, url, favicon)
-            }
-
-            override fun onPageFinished(view: WebView?, url: String?) {
-                loadBar.dismiss()
-
-                if (url!!.contains (".mp3")) {
-                    val intent = Intent (Intent.ACTION_VIEW)
-                    intent.setDataAndType (Uri.parse (url), "audio/*")
-                    startActivity (Intent.createChooser (intent, "Open Using..."))
-                }
-                else if (url.contains (".mp4") || url.contains (".3gp")) {
-                    val intent = Intent (Intent.ACTION_VIEW)
-                    intent.setDataAndType (Uri.parse (url), "video/*")
-                    startActivity (Intent.createChooser (intent, "Open Using..."))
-                }
-                else if (url.contains ("youtube.com")) {
-                    startActivity (Intent (Intent.ACTION_VIEW, Uri.parse (url)))
-                }
-
-                //ADD TO HISTORY
-                if(prefs!!.getBoolean("HistoryEnabled", true)){
-                    historyTitles.add(view!!.title)
-                    historyUrls.add(view.url)
-                }
-                super.onPageFinished(view, url)
-            }
-
-            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                Snackbar.make(webview, "ERROR LOADING PAGE", Snackbar.LENGTH_SHORT).show()
-                view!!.loadUrl("file:///android_asset/error.html")
-                super.onReceivedError(view, request, error)
-            }
+    fun connectToServer(v: View)
+    {
+        val client = TCPClient()
+        if(!serverIP_txt.text.toString().isEmpty()) {
+            client.SendMessage("This is a message to PC", serverIP_txt.text.toString())
+        }else{
+            Toast.makeText(this, "No Remote IP Specified", Toast.LENGTH_LONG).show()
         }
-        webview.webChromeClient = object :WebChromeClient(){
-            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                return true
-            }
+    }
 
-            override fun onJsAlert(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
-                AlertDialog.Builder(this@MainActivity).setMessage(message).setTitle(url+" Says:").show()
-                return true
-            }
-
-            override fun onReceivedIcon(view: WebView?, icon: Bitmap?) {
-                siteIcon.setImageBitmap(icon)
-                super.onReceivedIcon(view, icon)
-            }
-
-            override fun onReceivedTitle(view: WebView?, title: String?) {
-                webviewTitle.text = title
-                super.onReceivedTitle(view, title)
-            }
-        }
-
-        //KEYBOARD ACTION
-        UrlBar.setOnEditorActionListener {_, p1, _  ->
-                if (p1 == EditorInfo.IME_ACTION_SEND) {
-                    val webpage: String = UrlBar.text.toString ()
-                    if (Patterns.WEB_URL.matcher(webpage).matches()) {
-                        if(webpage.contains("http") or webpage.contains("https")) {
-                            webview.loadUrl(webpage)
-                        }else{
-                            webview.loadUrl("http://" + webpage)
-                        }
-                    }
-                    else {
-                        webview.loadUrl ("http://www.google.com/search?q=" + webpage)
-                    }
-                    //CLOSE SOFT KEYBOARD
-                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    imm.hideSoftInputFromWindow(UrlBar.windowToken, 0)
-                    return@setOnEditorActionListener true
-                }
-                return@setOnEditorActionListener true
-            }
-
-        //LOAD URL
-        val url = intent.data
-
-        if (url == null) {
-            webview.loadUrl("http://google.com")
-        } else {
-            webview.loadUrl(url.toString())
+    fun sendSnippetToPC(v: View)
+    {
+        val client = TCPClient()
+        if(!serverIP_txt.text.toString().isEmpty()) {
+            client.SendMessage("This is a message to PC", serverIP_txt.text.toString())
+        }else{
+            Toast.makeText(this, "No Remote IP Specified", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -198,11 +79,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
             drawer_layout.closeDrawer(GravityCompat.START)
         }
-
-        if (webview.canGoBack()){
-            webview.goBack()
-        }
-        else {
+        else
+        {
             super.onBackPressed()
         }
     }
@@ -227,20 +105,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.id.nav_share_page -> {
                 val intent = Intent (Intent.ACTION_SEND)
 			    intent.type ="text/plain"
-                intent.putExtra (Intent.EXTRA_TEXT, webview.url)
-                startActivity (Intent.createChooser (intent, "Share Via..."))
+                //intent.putExtra (Intent.EXTRA_TEXT, webview.url)
+                //startActivity (Intent.createChooser (intent, "Share Via..."))
             }
             R.id.nav_print -> {
                 printWebDoc()
             }
-            R.id.nav_history -> {
-                SaveHistory()
-                val i = Intent ("android.intent.action.HISTORY")
-                startActivityForResult (i, REQUEST_CODE_HISTORY)
-            }
-            R.id.nav_bookmarks -> {
-                showBookmarks()
-            }
+
             //dev tools
             R.id.nav_view_html -> {
 			  val i = Intent ("android.intent.action.VIEW_SOURCE")
@@ -248,24 +119,27 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 			  startActivity (i)
             }
             R.id.nav_editor -> {
-
+                val i = Intent ("android.intent.action.EDITOR")
+                startActivity (i)
             }
             R.id.nav_view_console -> {
 
             }
+
             //dev sites
             R.id.nav_stack_overflow -> {
-                webview.loadUrl("http://stackoverflow.com")
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("http://stackoverflow.com")))
             }
             R.id.nav_w3 -> {
-                webview.loadUrl("http://w3schools.com")
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("http://w3schools.com")))
             }
             R.id.nav_android_devs -> {
-                webview.loadUrl("http://developer.android.com")
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("http://developer.android.com")))
             }
             R.id.nav_fb_devs -> {
-                webview.loadUrl("http://developer.facebook.com")
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("http://developer.facebook.com")))
             }
+
             //About app
             R.id.nav_about -> {
                 val i = Intent ("android.intent.action.ABOUT")
@@ -280,93 +154,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
-    override fun onCreateContextMenu(menu: ContextMenu?, v: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
-        val result = webview.hitTestResult
-
-        val handler = MenuItem.OnMenuItemClickListener { item ->
-            // do the menu action
-            when (item.itemId) {
-            //SAVE IMAGE
-                ID_SAVEIMAGE -> SaveImage().SaveImage(result.extra)
-
-            //VIEW IMAGE
-                ID_VIEWIMAGE -> webview.loadUrl(result.extra)
-
-            //SET IMAGE AS BACKGROUND
-                ID_SET_AS_BG -> {
-                    val wallpaperManager = WallpaperManager.getInstance(applicationContext)
-                    try {
-                        val stream = URL(result.extra).content as InputStream
-                        val drawable = Drawable.createFromStream(stream, "wallpaper_image")
-                        val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-                        val canvas = Canvas(bitmap)
-                        drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
-                        drawable.draw(canvas)
-                        wallpaperManager.setBitmap(bitmap)
-                        Toast.makeText(applicationContext, "Wallpaper set", Toast.LENGTH_SHORT).show()
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        Toast.makeText(applicationContext, "Set Wallpaper failed", Toast.LENGTH_SHORT).show()
-                    }
-
-                }
-
-            //SAVE LINK
-                ID_SAVELINK -> {
-                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clip = ClipData.newPlainText(result.extra, result.extra)
-                    clipboard.primaryClip = clip
-                    Toast.makeText(this@MainActivity, "Copied to ClipBoard", Toast.LENGTH_SHORT).show()
-                }
-
-            //SHARE LINK
-                ID_SHARELINK -> {
-                    val intent = Intent(Intent.ACTION_SEND)
-                    intent.type = "text/plain"
-                    intent.putExtra(Intent.EXTRA_TEXT, result.extra)
-                    intent.putExtra(Intent.EXTRA_SUBJECT, "Check out this site!")
-                    startActivity(Intent.createChooser(intent, "Share Via..."))
-                }
-
-            //OPEN LINK
-                ID_OPENLINK -> webview.loadUrl(result.extra)
-            }
-            true
-        }
-
-        //if image
-        if (result.type == WebView.HitTestResult.IMAGE_TYPE || result.type == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
-            // Menu options for an image.
-            menu!!.setHeaderTitle (result.extra );
-            menu.add (0, ID_SAVEIMAGE, 0, "Save Image").setOnMenuItemClickListener (handler)
-            menu.add (0, ID_VIEWIMAGE, 0, "View Image").setOnMenuItemClickListener (handler)
-            menu.add (0, ID_SAVELINK, 0, "Copy Image URL").setOnMenuItemClickListener (handler)
-            menu.add (0, ID_SHARELINK, 0, "Share Image Url").setOnMenuItemClickListener (handler)
-            menu.add (0, ID_SET_AS_BG, 0, "Set as Wallpaper").setOnMenuItemClickListener (handler)
-        }
-        //if hyperlink
-        else if (result.type == WebView.HitTestResult.SRC_ANCHOR_TYPE) {
-            // Menu options for a hyperlink.
-            menu!!.setHeaderTitle (result.extra)
-            menu.add (0, ID_SAVELINK, 0, "Save Link").setOnMenuItemClickListener (handler)
-            menu.add (0, ID_SHARELINK, 0, "Share Link").setOnMenuItemClickListener (handler)
-            menu.add (0, ID_OPENLINK, 0, "Open").setOnMenuItemClickListener (handler)
-        }
-
-        super.onCreateContextMenu(menu, v, menuInfo)
-    }
-
     fun printWebDoc()
 	  {
 		// Check if Kitkat or higher sdk 19
 		if (Build.VERSION.SDK_INT >= 21) {
 			val printManager: PrintManager =  getSystemService (Context.PRINT_SERVICE) as PrintManager
 			// Get a print adapter instance
-			val printAdapter: PrintDocumentAdapter = webview.createPrintDocumentAdapter (webview.title)
+			//val printAdapter: PrintDocumentAdapter = webview.createPrintDocumentAdapter (webview.title)
 
 			// Create a print job with name and adapter instance
-			val jobName = "Koadah Web Document"
-			printManager.print (jobName, printAdapter, PrintAttributes.Builder ().build ())
+			//val jobName = "Koadah Web Document"
+			//printManager.print (jobName, printAdapter, PrintAttributes.Builder ().build ())
 		  }
 		else {
 			AlertDialog.Builder (this).
@@ -376,8 +174,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 	  }
 
     fun addShortcut()
-	  {
-		//Adding shortcut for website on Home screen
+      {
+        //Adding shortcut for website on Home screen
           if (Build.VERSION.SDK_INT >= 25) {
               val shortcutManager = getSystemService(ShortcutManager::class.java)
 
@@ -401,63 +199,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 //if it's already there, don't duplicate
                 applicationContext.sendBroadcast (addIntent)
           }
-	  }
-
-    fun addBookmark(v:View){
-        val bookmarkname = EditText (this)
-        bookmarkname.setText (webview.title)
-        AlertDialog.Builder (this).
-                setTitle ("Add Bookmark").
-                setMessage ("name this bookmark:").
-                setView (bookmarkname).
-                setPositiveButton("ADD", {_, _ ->
-                    if (bookmarkname.text.toString() != ""){
-                        try {
-                            editor!!.putString("BookmarkTitles", prefs!!.getString("BookmarkTitles","") + "\n" + bookmarkname.text.toString())
-                            editor!!.putString("BookmarkUrls", prefs!!.getString("BookmarkUrls","") + "\n" + webview.url)
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                        }
-                        editor!!.commit()
-                    }else{
-                        Toast.makeText(this, "Enter a name", Toast.LENGTH_SHORT).show()
-                    }
-                }).setNegativeButton("Cancel",{p0, _ ->
-                    p0.dismiss()
-                }).show()
-    }
-
-    fun showBookmarks(){
-        val d = AlertDialog.Builder(this)
-        val list = ListView(this)
-        val titles = prefs!!.getString("BookmarkTitles", "").split("\n")
-        val urls = prefs!!.getString("BookmarkUrls", "").split("\n")
-        val arrayAdapter = ArrayAdapter<String>(
-                this,
-                android.R.layout.simple_list_item_1,
-                titles)
-        list.adapter = arrayAdapter
-
-        list.setOnItemClickListener { _, _, i, _ ->
-            webview.loadUrl(urls[i])
-        }
-        d.setTitle("Bookmarks").setView(list).show()
-    }
-
-    fun Controls(v: View){
-        when (v.id){
-            R.id.btn_back->{
-                    webview.goBack()
-            }
-            R.id.btn_forward->{
-                    webview.goForward()
-            }
-            R.id.btn_reload->{
-                webview.reload()
-            }
-        }
-    }
-
+      }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (resultCode == RESULT_OK) {
@@ -465,26 +207,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 val words = data!!.getStringArrayListExtra (RecognizerIntent.EXTRA_RESULTS)[0]
                 webview.loadUrl ("http://www.google.com/search?q=" + words)
             }
-            else if (requestCode == REQUEST_CODE_HISTORY) {
-                webview.loadUrl (data!!.extras.getString ("url_clicked"))
-            }
         }
         super.onActivityResult(requestCode, resultCode, data)
     }
-
-    override fun onStop() {
-        SaveHistory()
-        super.onStop()
-    }
-
-    private fun SaveHistory(){
-        try {
-            editor!!.putString("HistoryTitles", prefs!!.getString("HistoryTitles","") + ObjectSerializer.serialize(historyTitles))
-            editor!!.putString("HistoryUrls", prefs!!.getString("HistoryUrls","") + ObjectSerializer.serialize(historyUrls))
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        editor!!.commit()
-    }
-
 }
